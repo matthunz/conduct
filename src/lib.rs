@@ -33,7 +33,12 @@ fn main() -> wry::Result<()> {
         WebViewBuilder::new_gtk(vbox)
     };
 
-    let webview = builder.with_html(include_str!("../index.html"))?.build()?;
+    let webview = builder
+        .with_html(include_str!("../index.html"))?
+        .with_ipc_handler(|event| {
+            dbg!(event);
+        })
+        .build()?;
     *SENDER.lock().unwrap() = Some(event_loop.create_proxy());
 
     event_loop.run(move |event, _, control_flow| {

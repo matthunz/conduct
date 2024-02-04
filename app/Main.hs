@@ -1,18 +1,22 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
 
 import Control.Concurrent
-import Control.Monad
 import Foreign.C.String
-import System.IO.Unsafe
+
+import Attribute
+import Html (Html (..))
+import qualified Html
 
 foreign import ccall "c_start" start :: IO ()
 
 foreign import ccall unsafe "c_eval" evalJs :: CString -> IO ()
 
-data Mutation
+data Mutation m
     = CreateElement String Int Int
     | CreateTextNode String Int Int
+    | SetAttribute Int (Attribute m)
 
+toJson :: Mutation m -> String
 toJson mutation =
     case mutation of
         CreateElement tag id parentId ->
@@ -31,17 +35,25 @@ toJson mutation =
                 ++ ", content: "
                 ++ show content
                 ++ " }"
-
-data Html = Element String [Html] | Text String
+        SetAttribute id (Attribute name value) ->
+            "{ kind: 'set-attribute', id: "
+                ++ show id
+                ++ ", name: "
+                ++ show name
+                ++ ( case value of
+                        StringValue s -> ", value: " ++ s
+                        HandlerValue _ -> ""
+                   )
+                ++ " }"
 
 data VirtualDom = VirtualDom Int Int
 
 mkVirtualDom :: VirtualDom
 mkVirtualDom = VirtualDom 1 0
 
-build :: VirtualDom -> Html -> (VirtualDom, [Mutation])
+build :: VirtualDom -> Html m -> (VirtualDom, [Mutation m])
 build (VirtualDom nextId parentId) html = case html of
-    Element tag children ->
+    Element tag attrs children ->
         let (vdom, mutations) =
                 foldr
                     ( \child (VirtualDom childNextId childParentId, childMutations) ->
@@ -55,22 +67,22 @@ build (VirtualDom nextId parentId) html = case html of
                     , []
                     )
                     children
-         in (vdom, CreateElement tag nextId parentId : mutations)
+            attrMutations = map (SetAttribute nextId) attrs
+         in (vdom, CreateElement tag nextId parentId : attrMutations ++ mutations)
     Text content ->
         ( VirtualDom (nextId + 1) nextId
         , [CreateTextNode content nextId parentId]
         )
 
-div_ = Element "div"
+data Message = Increment | Decrement
 
-button = Element "button"
-
-app :: Html
+app :: Html Message
 app =
-    div_
+    Html.div
+        []
         [ Text "Hello World!"
-        , button [Text "Up high!"]
-        , button [Text "Down low!"]
+        , Html.button [Attribute.onClick Increment] [Text "Up high!"]
+        , Html.button [Attribute.onClick Decrement] [Text "Down low!"]
         ]
 
 main :: IO ()

@@ -50,6 +50,16 @@
                 };
                 break;
 
+              case "set-attribute":
+                if (mutation.value != null) {
+
+                } else {
+                  window.conduct.elements[mutation.id].node.addEventListener(mutation.name, function (event) {
+                    window.ipc.postMessage(mutation.id.toString())
+                  })
+                }
+                break;
+
               default:
                 break;
             }
