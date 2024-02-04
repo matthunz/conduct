@@ -12,6 +12,25 @@ custom-setup
         process ^>=1.6,
         Cabal
 
+library
+    exposed-modules:
+        Attribute
+        EventLoop
+        Html
+        VirtualDom
+
+    hs-source-dirs:   app
+    default-language: Haskell2010
+    extra-libraries:  conduct
+    extra-lib-dirs:
+        /Users/matt/Documents/conduct/target/aarch64-apple-darwin/debug
+
+    build-depends:
+        base ^>=4.17.1.0,
+        aeson ^>=2.1,
+        bytestring ^>=0.11,
+        utf8-string ^>=1.0
+
 executable custom-build
     main-is:            Setup.hs
     build-tool-depends: Cabal:build
@@ -21,18 +40,11 @@ executable custom-build
         process ^>=1.6,
         Cabal
 
-executable conduct
-    main-is:          Main.hs
-    hs-source-dirs:   app
+executable counter
+    main-is:          Counter.hs
+    hs-source-dirs:   examples
     default-language: Haskell2010
-    extra-libraries:  conduct
-    extra-lib-dirs:
-        ./target/debug ./target/release ./target/aarch64-apple-darwin/debug
-        ./target/release
-
     ghc-options:      -Wall -threaded -rtsopts -with-rtsopts=-N
     build-depends:
         base ^>=4.17.1.0,
-        aeson ^>=2.1,
-        bytestring ^>=0.11,
-        utf8-string ^>=1.0
+        conduct

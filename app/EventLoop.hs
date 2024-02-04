@@ -1,6 +1,8 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE ForeignFunctionInterface #-}
 
+module EventLoop where
+
 import Attribute
 import Control.Concurrent
 import Data.Aeson
@@ -21,17 +23,6 @@ foreign import ccall "c_start" start :: FunPtr (CString -> IO ()) -> IO ()
 
 foreign import ccall unsafe "c_eval" evalJs :: CString -> IO ()
 
-data Message = Increment | Decrement
-
-app :: Int -> Html Message
-app count =
-  Html.div
-    []
-    [ Text $ "High five count" ++ show count,
-      Html.button [Attribute.onClick Increment] [Text "Up high!"],
-      Html.button [Attribute.onClick Decrement] [Text "Down low!"]
-    ]
-
 data CallbackEvent = CallbackEvent
   { id :: Int,
     name :: String
@@ -47,21 +38,11 @@ callback event = do
         maybeMyData = decode jsonByteString :: Maybe CallbackEvent
      in print maybeMyData
     )
-  ( let (_, mutations) = build mkVirtualDom (app 2)
-     in do
-          withCString
-            ( "window.conduct.update(["
-                ++ concatMap (\m -> toJson m ++ ", ") mutations
-                ++ "])"
-            )
-            evalJs
-    )
 
-main :: IO ()
-main = do
+run app = do
   _ <-
     forkIO
-      ( let (_, mutations) = build mkVirtualDom (app 0)
+      ( let (_, mutations) = build mkVirtualDom app
          in do
               withCString
                 ( "window.conduct.update(["
