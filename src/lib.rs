@@ -1,4 +1,8 @@
-use std::{ffi::CStr, os::raw::c_char, sync::Mutex};
+use std::{
+    ffi::{CStr, CString},
+    os::raw::c_char,
+    sync::Mutex,
+};
 use tao::{
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop, EventLoopBuilder, EventLoopProxy},
@@ -8,7 +12,7 @@ use wry::WebViewBuilder;
 
 static SENDER: Mutex<Option<EventLoopProxy<String>>> = Mutex::new(None);
 
-fn main() -> wry::Result<()> {
+fn main(callback: extern "C" fn(*const c_char)) -> wry::Result<()> {
     let event_loop: EventLoop<String> = EventLoopBuilder::with_user_event().build();
     let window = WindowBuilder::new().build(&event_loop).unwrap();
 
@@ -35,8 +39,9 @@ fn main() -> wry::Result<()> {
 
     let webview = builder
         .with_html(include_str!("../index.html"))?
-        .with_ipc_handler(|event| {
-            dbg!(event);
+        .with_ipc_handler(move |event| {
+            let s = CString::new(event).unwrap();
+            callback(s.as_ptr());
         })
         .build()?;
     *SENDER.lock().unwrap() = Some(event_loop.create_proxy());
@@ -58,9 +63,10 @@ fn main() -> wry::Result<()> {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn c_start() {
+pub unsafe extern "C" fn c_start(callback: extern "C" fn(*const c_char)) {
     dbg!("RUST MAIN");
-    main().unwrap();
+
+    main(callback).unwrap();
 }
 
 #[no_mangle]

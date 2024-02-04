@@ -55,7 +55,11 @@
 
                 } else {
                   window.conduct.elements[mutation.id].node.addEventListener(mutation.name, function (event) {
-                    window.ipc.postMessage(mutation.id.toString())
+                    var json = JSON.stringify({
+                      id: mutation.id,
+                      name: mutation.name
+                    });
+                    window.ipc.postMessage(json)
                   })
                 }
                 break;

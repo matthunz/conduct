@@ -29,7 +29,8 @@ executable conduct
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
-    build-depends:    base ^>=4.17.1.0
+    build-depends:    base ^>=4.17.1.0, 
+        aeson ^>=2.1, bytestring ^>=0.11, utf8-string ^>=1.0
     hs-source-dirs:   app
     default-language: Haskell2010
     ghc-options:  -Wall -threaded -rtsopts -with-rtsopts=-N
