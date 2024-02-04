@@ -1,14 +1,15 @@
-use std::{ffi::CStr, os::raw::c_char};
-
+use std::{ffi::CStr, os::raw::c_char, sync::Mutex};
 use tao::{
     event::{Event, WindowEvent},
-    event_loop::{ControlFlow, EventLoop},
+    event_loop::{ControlFlow, EventLoop, EventLoopBuilder, EventLoopProxy},
     window::WindowBuilder,
 };
 use wry::WebViewBuilder;
 
+static SENDER: Mutex<Option<EventLoopProxy<String>>> = Mutex::new(None);
+
 fn main() -> wry::Result<()> {
-    let event_loop = EventLoop::new();
+    let event_loop: EventLoop<String> = EventLoopBuilder::with_user_event().build();
     let window = WindowBuilder::new().build(&event_loop).unwrap();
 
     #[cfg(any(
@@ -32,28 +33,39 @@ fn main() -> wry::Result<()> {
         WebViewBuilder::new_gtk(vbox)
     };
 
-    let _webview = builder.with_url("https://tauri.app")?.build()?;
+    let webview = builder.with_url("https://tauri.app")?.build()?;
+    *SENDER.lock().unwrap() = Some(event_loop.create_proxy());
 
     event_loop.run(move |event, _, control_flow| {
         *control_flow = ControlFlow::Wait;
 
-        if let Event::WindowEvent {
-            event: WindowEvent::CloseRequested,
-            ..
-        } = event
-        {
-            *control_flow = ControlFlow::Exit
+        match event {
+            Event::WindowEvent {
+                event: WindowEvent::CloseRequested,
+                ..
+            } => *control_flow = ControlFlow::Exit,
+            Event::UserEvent(ref js) => {
+                webview.evaluate_script(js).unwrap();
+            }
+            _ => (),
         }
     });
 }
 
-pub fn hello(input: &str) {
-    dbg!("Running!");
+#[no_mangle]
+pub unsafe extern "C" fn c_start() {
+    dbg!("RUST MAIN");
     main().unwrap();
-    dbg!("Ran2!");
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn c_hello(input: *const c_char) {
-    hello(CStr::from_ptr(input).to_str().expect("invalid UTF-8 data"));
+pub unsafe extern "C" fn c_eval(input: *const c_char) {
+    let s = CStr::from_ptr(input).to_str().expect("invalid UTF-8 data");
+    SENDER
+        .lock()
+        .unwrap()
+        .as_mut()
+        .unwrap()
+        .send_event(s.to_owned())
+        .unwrap();
 }

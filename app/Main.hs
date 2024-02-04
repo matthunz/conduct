@@ -1,11 +1,22 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
 
-import Foreign.C.String (CString, newCString)
+import Control.Concurrent
 import Control.Monad
+import Foreign.C.String
+import System.IO.Unsafe
 
-foreign import ccall unsafe "c_hello" hello :: CString -> IO ()
+foreign import ccall  "c_start" start :: IO ()
+
+foreign import ccall unsafe "c_eval" evalJs :: CString -> IO ()
 
 main :: IO ()
-main =  forever $ do
-    str <- newCString "World"
-    hello str
+main = do
+    _ <-
+        forkIO
+            ( do
+                -- TODO uhh...
+                _ <- threadDelay 1000000
+                withCString "console.log('test')" evalJs
+            )
+    start
+   
