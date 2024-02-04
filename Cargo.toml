@@ -4,6 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [lib]
-crate-type = ["staticlib"]
+crate-type = ["dylib"]
 
 [dependencies]
+tao = { version = "0.25.0", features = ["rwh_05"] }
+wry = "0.35.2"
