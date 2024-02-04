@@ -33,7 +33,7 @@ fn main() -> wry::Result<()> {
         WebViewBuilder::new_gtk(vbox)
     };
 
-    let webview = builder.with_url("https://tauri.app")?.build()?;
+    let webview = builder.with_html(include_str!("../index.html"))?.build()?;
     *SENDER.lock().unwrap() = Some(event_loop.create_proxy());
 
     event_loop.run(move |event, _, control_flow| {
@@ -61,11 +61,12 @@ pub unsafe extern "C" fn c_start() {
 #[no_mangle]
 pub unsafe extern "C" fn c_eval(input: *const c_char) {
     let s = CStr::from_ptr(input).to_str().expect("invalid UTF-8 data");
-    SENDER
-        .lock()
-        .unwrap()
-        .as_mut()
-        .unwrap()
-        .send_event(s.to_owned())
-        .unwrap();
+
+    loop {
+        let mut tx_cell = SENDER.lock().unwrap();
+        if let Some(tx) = tx_cell.as_mut() {
+            tx.send_event(s.to_owned()).unwrap();
+            break;
+        }
+    }
 }

@@ -1,0 +1,61 @@
+<html>
+  <body>
+    <script>
+      window.conduct = {
+        elements: {},
+        update: function (mutations) {
+          console.log(mutations);
+          
+          mutations.forEach((mutation) => {
+            switch (mutation.kind) {
+              case "create-element":
+                var elem = document.createElement(mutation.tag);
+
+                if (mutation.parentId == 0) {
+                  document.body.appendChild(elem);
+                } else {
+                  window.conduct.elements[mutation.parentId].node.appendChild(
+                    elem
+                  );
+                  window.conduct.elements[mutation.parentId].children.push(
+                    mutation.id
+                  );
+                }
+
+                window.conduct.elements[mutation.id] = {
+                  id: mutation.id,
+                  node: elem,
+                  children: [],
+                };
+                break;
+
+              case "create-text-node":
+                var node = document.createTextNode(mutation.content);
+
+                if (mutation.parentId == 0) {
+                  document.body.appendChild(node);
+                } else {
+                  window.conduct.elements[mutation.parentId].node.appendChild(
+                    node
+                  );
+                  window.conduct.elements[mutation.parentId].children.push(
+                    mutation.id
+                  );
+                }
+
+                window.conduct.elements[mutation.id] = {
+                  id: mutation.id,
+                  node: node,
+                  children: [],
+                };
+                break;
+
+              default:
+                break;
+            }
+          });
+        },
+      };
+    </script>
+  </body>
+</html>
