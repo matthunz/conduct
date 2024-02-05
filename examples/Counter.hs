@@ -5,8 +5,8 @@ import qualified Html
 
 data Message = Increment | Decrement
 
-app :: Int -> Html Message
-app count =
+view :: Int -> Html Message
+view count =
   Html.div
     []
     [ Text $ "High five count: " ++ show count,
@@ -20,4 +20,4 @@ update count msg = return $ case msg of
   Decrement -> count - 1
 
 main :: IO ()
-main = run app 0 update
+main = run view 0 update
