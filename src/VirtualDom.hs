@@ -38,7 +38,7 @@ toJson mutation =
         ++ ", name: "
         ++ show name
         ++ ( case value of
-               StringValue s -> ", value: " ++ s
+               StringValue s -> ", value: " ++ show s
                HandlerValue _ -> ""
            )
         ++ " }"

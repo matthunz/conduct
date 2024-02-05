@@ -49,3 +49,13 @@ executable counter
     build-depends:
         base >=4 && <5,
         conduct
+
+executable todomvc
+    main-is:          TodoMVC.hs
+    hs-source-dirs:   examples
+    default-language: Haskell2010
+    ghc-options:      -Wall -threaded -rtsopts -with-rtsopts=-N
+    build-depends:
+        base >=4 && <5,
+        conduct
+
