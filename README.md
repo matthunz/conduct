@@ -1,5 +1,8 @@
 # Conduct
+
 [![CI](https://github.com/matthunz/conduct/actions/workflows/haskell.yml/badge.svg)](https://github.com/matthunz/conduct/actions/workflows/haskell.yml)
+
+[Examples](https://github.com/matthunz/conduct/tree/main/examples)
 
 A cross-platform UI framework for Haskell.
 
