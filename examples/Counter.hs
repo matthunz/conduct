@@ -1,5 +1,5 @@
 import Attribute
-import EventLoop
+import EventLoop (run)
 import Html (Html (..))
 import qualified Html
 

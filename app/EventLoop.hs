@@ -52,6 +52,7 @@ callback app var update event = do
                     case handle id name node of
                       Just msg -> do
                         newState <- update state msg
+                        atomically $ writeTVar var (newState, Just node)
                         return ()
                       Nothing -> return ()
                   Nothing ->
@@ -61,6 +62,7 @@ callback app var update event = do
           Nothing -> return ()
     )
 
+run :: (s -> Html m) -> s -> (s -> m -> IO s) -> IO ()
 run app state update = do
   stateVar <- newTVarIO (state, Nothing)
   _ <-
