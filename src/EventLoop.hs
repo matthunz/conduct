@@ -27,7 +27,8 @@ foreign import ccall unsafe "c_eval" evalJs :: CString -> IO ()
 
 data CallbackEvent = CallbackEvent
   { id :: Int,
-    name :: String
+    name :: String,
+    event :: Event
   }
   deriving (Show, Generic)
 
@@ -44,12 +45,12 @@ callback app var update event = do
   ( let jsonByteString = BLU.fromString s
         maybeMyData = decode jsonByteString :: Maybe CallbackEvent
      in case maybeMyData of
-          Just (CallbackEvent id name) -> do
+          Just (CallbackEvent id name event) -> do
             (state, nodeCell) <- readTVarIO var
             _ <-
               ( case nodeCell of
                   Just (VirtualDom nextId _, node) ->
-                    case handle id name node of
+                    case handle id name event node of
                       Just msg -> do
                         newState <- update state msg
                         ( let (newVdom, newNode, mutations) = rebuild (VirtualDom nextId 0) (app newState) node

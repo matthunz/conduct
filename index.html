@@ -66,10 +66,37 @@
                       event.preventDefault();
                       event.stopPropagation();
 
+                      var ipcEvent;
+                      switch (mutation.name) {
+                        case "input":
+                          ipcEvent = {
+                            tag: "Input",
+                            inputValue: event.target.value,
+                          };
+                          break;
+
+                        case "click":
+                          ipcEvent = {
+                            tag: "Click",
+                          };
+                          break;
+
+                        case "submit":
+                          ipcEvent = {
+                            tag: "Submit",
+                          };
+                          break;
+
+                        default:
+                          break;
+                      }
+
                       var json = JSON.stringify({
                         id: mutation.id,
                         name: mutation.name,
+                        event: ipcEvent,
                       });
+                      console.log(json);
                       window.ipc.postMessage(json);
                     }
                   );

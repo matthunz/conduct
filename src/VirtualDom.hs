@@ -51,17 +51,17 @@ toJson mutation =
 
 data Node m = ElementNode Int [Attribute m] [Node m] | TextNode Int String
 
-handle :: Int -> String -> Node m -> Maybe m
-handle id name node = case node of
+handle :: Int -> String -> Event -> Node m -> Maybe m
+handle id name event node = case node of
   ElementNode nodeId attrs children ->
     if id == nodeId
       then
         find (\(Attribute attrName _) -> attrName == name) attrs
           >>= ( \(Attribute _ kind) -> case kind of
-                  HandlerValue f -> Just f
+                  HandlerValue f -> Just (f event)
                   StringValue _ -> Nothing
               )
-      else msum $ map (handle id name) children
+      else msum $ map (handle id name event) children
   TextNode _ _ -> Nothing
 
 data VirtualDom = VirtualDom Int Int
@@ -130,7 +130,7 @@ rebuild (VirtualDom nextId parentId) html node = case html of
             attrMutations = map (SetAttribute nodeId) attrs
          in ( vdom,
               ElementNode nodeId nodeAttrs childNodes,
-              mutations
+              mutations ++ attrMutations
             )
       TextNode id _ ->
         ( VirtualDom (nextId + 1) parentId,
