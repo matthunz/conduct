@@ -18,14 +18,14 @@ import Distribution.Simple.UserHooks
   ( UserHooks (buildHook, confHook),
   )
 import Distribution.Simple.Utils (rawSystemExit)
+import Distribution.Verbosity (normal)
 import System.Directory (getCurrentDirectory)
 
 main :: IO ()
 main =
   defaultMainWithHooks
     simpleUserHooks
-      { confHook = rustConfHook,
-        buildHook = rustBuildHook
+      { confHook = rustConfHook
       }
 
 rustConfHook ::
@@ -33,6 +33,8 @@ rustConfHook ::
   ConfigFlags ->
   IO LocalBuildInfo
 rustConfHook (description, buildInfo) flags = do
+  rawSystemExit normal "cargo" ["build", "--release"]
+
   localBuildInfo <- confHook simpleUserHooks (description, buildInfo) flags
   let packageDescription = localPkgDescr localBuildInfo
       library = fromJust $ PD.library packageDescription
@@ -57,19 +59,3 @@ rustConfHook (description, buildInfo) flags = do
                     }
             }
       }
-
-rustBuildHook ::
-  PD.PackageDescription ->
-  LocalBuildInfo ->
-  UserHooks ->
-  BuildFlags ->
-  IO ()
-rustBuildHook description localBuildInfo hooks flags = do
-  putStrLn "******************************************************************"
-  putStrLn "Call `cargo build --release` to build a dependency written in Rust"
-  -- FIXME: add `--target $TARGET` flag to support cross-compiling to $TARGET
-  rawSystemExit (fromFlag $ buildVerbosity flags) "cargo" ["build", "--release"]
-  putStrLn "... `rustc` compilation seems to succeed 🦀! Back to Cabal build:"
-  putStrLn "******************************************************************"
-  putStrLn "Back to Cabal build"
-  buildHook simpleUserHooks description localBuildInfo hooks flags
