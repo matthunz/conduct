@@ -1,6 +1,8 @@
 module VirtualDom where
 
 import Attribute
+import Control.Monad (msum)
+import Data.List (find)
 import Html
 
 data Mutation m
@@ -38,30 +40,52 @@ toJson mutation =
            )
         ++ " }"
 
+data Node m = ElementNode Int [Attribute m] [Node m] | TextNode Int String
+
+handle :: Int -> String -> Node m -> Maybe m
+handle id name node = case node of
+  ElementNode nodeId attrs children ->
+    if id == nodeId
+      then
+        find (\(Attribute attrName _) -> attrName == name) attrs
+          >>= ( \(Attribute _ kind) -> case kind of
+                  HandlerValue f -> Just f
+                  StringValue _ -> Nothing
+              )
+      else msum $ map (handle id name) children
+  TextNode _ _ -> Nothing
+
 data VirtualDom = VirtualDom Int Int
 
 mkVirtualDom :: VirtualDom
 mkVirtualDom = VirtualDom 1 0
 
-build :: VirtualDom -> Html m -> (VirtualDom, [Mutation m])
+build :: VirtualDom -> Html m -> (VirtualDom, Node m, [Mutation m])
 build (VirtualDom nextId parentId) html = case html of
   Element tag attrs children ->
-    let (vdom, mutations) =
+    let (vdom, childNodes, mutations) =
           foldr
-            ( \child (VirtualDom childNextId childParentId, childMutations) ->
-                let (VirtualDom innerChildNextId _, innerMutations) =
-                      build (VirtualDom childNextId childParentId) child
-                 in ( VirtualDom innerChildNextId childParentId,
-                      innerMutations ++ childMutations
-                    )
+            ( \child
+               ( VirtualDom childNextId childParentId,
+                 childNodes2,
+                 childMutations
+                 ) ->
+                  let ( VirtualDom innerChildNextId _,
+                        innerNode,
+                        innerMutations
+                        ) =
+                          build (VirtualDom childNextId childParentId) child
+                   in ( VirtualDom innerChildNextId childParentId,
+                        innerNode : childNodes2,
+                        innerMutations ++ childMutations
+                      )
             )
-            ( VirtualDom (nextId + 1) nextId,
-              []
-            )
+            (VirtualDom (nextId + 1) nextId, [], [])
             children
         attrMutations = map (SetAttribute nextId) attrs
-     in (vdom, CreateElement tag nextId parentId : attrMutations ++ mutations)
+     in (vdom, ElementNode nextId attrs childNodes, CreateElement tag nextId parentId : attrMutations ++ mutations)
   Text content ->
     ( VirtualDom (nextId + 1) nextId,
+      TextNode nextId content,
       [CreateTextNode content nextId parentId]
     )

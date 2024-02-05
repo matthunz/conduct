@@ -16,7 +16,7 @@ app :: Int -> Html Message
 app count =
   Html.div
     []
-    [ Text $ "High five count" ++ show count,
+    [ Text $ "High five count: " ++ show count,
       Html.button [onClick Increment] [Text "Up high!"],
       Html.button [onClick Decrement] [Text "Down low!"]
     ]

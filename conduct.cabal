@@ -29,7 +29,8 @@ library
         base ^>=4.17.1.0,
         aeson ^>=2.1,
         bytestring ^>=0.11,
-        utf8-string ^>=1.0
+        utf8-string ^>=1.0,
+        stm ^>=2.5
 
 executable custom-build
     main-is:            Setup.hs
