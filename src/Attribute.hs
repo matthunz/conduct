@@ -10,5 +10,8 @@ onClick f = Attribute "click" (HandlerValue f)
 onInput :: m -> Attribute m
 onInput f = Attribute "input" (HandlerValue f)
 
+attr :: String -> String -> Attribute m
+attr name value = Attribute name (StringValue value)
+
 className :: String -> Attribute m
-className name = Attribute "class" (StringValue name)
+className = attr "class"

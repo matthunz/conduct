@@ -48,11 +48,11 @@ callback app var update event = do
             (state, nodeCell) <- readTVarIO var
             _ <-
               ( case nodeCell of
-                  Just (vdom, node) ->
+                  Just (VirtualDom nextId _, node) ->
                     case handle id name node of
                       Just msg -> do
                         newState <- update state msg
-                        ( let (newVdom, newNode, mutations) = rebuild vdom (app newState) node
+                        ( let (newVdom, newNode, mutations) = rebuild (VirtualDom nextId 0) (app newState) node
                            in do
                                 atomically $ writeTVar var (newState, Just (newVdom, newNode))
                                 withCString

@@ -52,10 +52,20 @@
 
               case "set-attribute":
                 if (mutation.value != null) {
+                  if (mutation.name == "class") {
+                    window.conduct.elements[mutation.id].node.className =
+                      mutation.value;
+                  } else {
+                    window.conduct.elements[mutation.id].node[mutation.name] =
+                      mutation.value;
+                  }
                 } else {
                   window.conduct.elements[mutation.id].node.addEventListener(
                     mutation.name,
                     function (event) {
+                      event.preventDefault();
+                      event.stopPropagation();
+
                       var json = JSON.stringify({
                         id: mutation.id,
                         name: mutation.name,

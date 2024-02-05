@@ -127,7 +127,7 @@ rebuild (VirtualDom nextId parentId) html node = case html of
                 )
                 (VirtualDom (nextId + 1) nextId, [], [])
                 (zip children nodeChildren)
-            attrMutations = map (SetAttribute nextId) attrs
+            attrMutations = map (SetAttribute nodeId) attrs
          in ( vdom,
               ElementNode nodeId nodeAttrs childNodes,
               mutations
