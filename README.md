@@ -1,6 +1,6 @@
 # Conduct
 
-[![CI](https://github.com/matthunz/conduct/actions/workflows/haskell.yml/badge.svg)](https://github.com/matthunz/conduct/actions/workflows/haskell.yml)
+[![CI](https://github.com/matthunz/conduct/actions/workflows/ci.yml/badge.svg)](https://github.com/matthunz/conduct/actions/workflows/ci.yml)
 
 [Examples](https://github.com/matthunz/conduct/tree/main/examples)
 
