@@ -1,4 +1,6 @@
 # Conduct
+[![CI](https://github.com/matthunz/conduct/actions/workflows/haskell.yml/badge.svg)](https://github.com/matthunz/conduct/actions/workflows/haskell.yml)
+
 A cross-platform UI framework for Haskell.
 
 This package provides an [Elm](https://elm-lang.org)-style
@@ -6,14 +8,14 @@ user interface library for [Tauri](https://tauri.app).
 
 ```hs
 import Attribute
-import EventLoop ( run )
+import EventLoop (run)
 import Html (Html (..))
 import qualified Html
 
 data Message = Increment | Decrement
 
-app :: Int -> Html Message
-app count =
+view :: Int -> Html Message
+view count =
   Html.div
     []
     [ Text $ "High five count: " ++ show count,
@@ -27,5 +29,5 @@ update count msg = return $ case msg of
   Decrement -> count - 1
 
 main :: IO ()
-main = run app 0 update
+main = run view 0 update
 ```
