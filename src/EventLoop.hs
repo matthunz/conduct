@@ -35,7 +35,7 @@ instance FromJSON CallbackEvent
 
 callback ::
   (s -> Html m) ->
-  TVar (s, Maybe (Node m)) ->
+  TVar (s, Maybe (VirtualDom, Node m)) ->
   (s -> m -> IO s) ->
   CString ->
   IO ()
@@ -48,11 +48,20 @@ callback app var update event = do
             (state, nodeCell) <- readTVarIO var
             _ <-
               ( case nodeCell of
-                  Just node ->
+                  Just (vdom, node) ->
                     case handle id name node of
                       Just msg -> do
                         newState <- update state msg
-                        atomically $ writeTVar var (newState, Just node)
+                        ( let (newVdom, newNode, mutations) = rebuild vdom (app newState) node
+                           in do
+                                atomically $ writeTVar var (newState, Just (newVdom, newNode))
+                                withCString
+                                  ( "window.conduct.update(["
+                                      ++ concatMap (\m -> toJson m ++ ", ") mutations
+                                      ++ "])"
+                                  )
+                                  evalJs
+                          )
                         return ()
                       Nothing -> return ()
                   Nothing ->
@@ -67,9 +76,9 @@ run app state update = do
   stateVar <- newTVarIO (state, Nothing)
   _ <-
     forkIO
-      ( let (_, node, mutations) = build mkVirtualDom (app state)
+      ( let (vdom, node, mutations) = build mkVirtualDom (app state)
          in do
-              atomically $ writeTVar stateVar (state, Just node)
+              atomically $ writeTVar stateVar (state, Just (vdom, node))
               withCString
                 ( "window.conduct.update(["
                     ++ concatMap (\m -> toJson m ++ ", ") mutations

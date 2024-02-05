@@ -5,7 +5,7 @@
         elements: {},
         update: function (mutations) {
           console.log(mutations);
-          
+
           mutations.forEach((mutation) => {
             switch (mutation.kind) {
               case "create-element":
@@ -52,16 +52,23 @@
 
               case "set-attribute":
                 if (mutation.value != null) {
-
                 } else {
-                  window.conduct.elements[mutation.id].node.addEventListener(mutation.name, function (event) {
-                    var json = JSON.stringify({
-                      id: mutation.id,
-                      name: mutation.name
-                    });
-                    window.ipc.postMessage(json)
-                  })
+                  window.conduct.elements[mutation.id].node.addEventListener(
+                    mutation.name,
+                    function (event) {
+                      var json = JSON.stringify({
+                        id: mutation.id,
+                        name: mutation.name,
+                      });
+                      window.ipc.postMessage(json);
+                    }
+                  );
                 }
+                break;
+
+              case "set-text":
+                window.conduct.elements[mutation.id].node.textContent =
+                  mutation.content;
                 break;
 
               default:

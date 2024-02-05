@@ -33,7 +33,8 @@ rustConfHook ::
   ConfigFlags ->
   IO LocalBuildInfo
 rustConfHook (description, buildInfo) flags = do
-  rawSystemExit normal "cargo" ["build", "--release"]
+  -- rawSystemExit normal "cargo" ["build", "--release"]
+  rawSystemExit normal "cargo" ["build"]
 
   localBuildInfo <- confHook simpleUserHooks (description, buildInfo) flags
   let packageDescription = localPkgDescr localBuildInfo
