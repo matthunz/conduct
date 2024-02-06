@@ -1,8 +1,11 @@
+{-# LANGUAGE LambdaCase #-}
+
 module VirtualDom where
 
 import Attribute
 import Control.Monad (msum)
 import Data.List (find)
+import Debug.Trace (trace)
 import Html
 
 data Mutation m
@@ -145,10 +148,35 @@ rebuildElement (VirtualDom nextId parentId) tag attrs children node =
               )
               (VirtualDom (nextId + 1) nextId, [], [])
               (zip children nodeChildren)
+          (vdom3, childNodes3, mutations3) =
+            let childrenLength = length children
+                childNodesLength = length childNodes
+             in if childrenLength > childNodesLength
+                  then
+                    foldr
+                      ( \child (vdom2, childNodes2, mutations2) ->
+                          let (vdom3, node, ms) = build vdom2 child
+                           in (vdom3, node : childNodes2, ms)
+                      )
+                      (vdom, [], [])
+                      (take childNodesLength $ reverse children)
+                  else
+                    if childrenLength < childNodesLength
+                      then
+                        ( vdom,
+                          [],
+                          map
+                            ( \case
+                                ElementNode id _ _ -> Remove id
+                                TextNode id _ -> Remove id
+                            )
+                            (take childrenLength $ reverse childNodes)
+                        )
+                      else (vdom, [], [])
           attrMutations = map (SetAttribute nodeId) attrs
-       in ( vdom,
-            ElementNode nodeId nodeAttrs childNodes,
-            mutations ++ attrMutations
+       in ( vdom3,
+            ElementNode nodeId nodeAttrs (childNodes ++ childNodes3),
+            mutations ++ attrMutations ++ mutations3
           )
 
 rebuildText ::
@@ -177,6 +205,6 @@ rebuild ::
   Html m ->
   Node m ->
   (VirtualDom, Node m, [Mutation m])
-rebuild vdom html node = case html of
-  Element tag attrs children -> rebuildElement vdom tag attrs children node
-  Text content -> rebuildText vdom content node
+rebuild vdom html = case html of
+  Element tag attrs children -> rebuildElement vdom tag attrs children
+  Text content -> rebuildText vdom content

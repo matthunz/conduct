@@ -1,5 +1,4 @@
 import Attribute
-import Attribute (onSubmit)
 import EventLoop (run)
 import Html (Html (..))
 import qualified Html
