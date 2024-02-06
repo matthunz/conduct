@@ -69,75 +69,95 @@ data VirtualDom = VirtualDom Int Int
 mkVirtualDom :: VirtualDom
 mkVirtualDom = VirtualDom 1 0
 
-build :: VirtualDom -> Html m -> (VirtualDom, Node m, [Mutation m])
-build (VirtualDom nextId parentId) html = case html of
-  Element tag attrs children ->
-    let (vdom, childNodes, mutations) =
-          foldr
-            ( \child
-               ( VirtualDom childNextId childParentId,
-                 childNodes2,
-                 childMutations
-                 ) ->
-                  let ( VirtualDom innerChildNextId _,
-                        innerNode,
-                        innerMutations
-                        ) =
-                          build (VirtualDom childNextId childParentId) child
-                   in ( VirtualDom innerChildNextId childParentId,
-                        innerNode : childNodes2,
-                        innerMutations ++ childMutations
-                      )
-            )
-            (VirtualDom (nextId + 1) nextId, [], [])
-            children
-        attrMutations = map (SetAttribute nextId) attrs
-     in (vdom, ElementNode nextId attrs childNodes, CreateElement tag nextId parentId : attrMutations ++ mutations)
-  Text content ->
-    ( VirtualDom (nextId + 1) nextId,
-      TextNode nextId content,
-      [CreateTextNode content nextId parentId]
-    )
-
-rebuild ::
+buildElement ::
   VirtualDom ->
-  Html m ->
+  String ->
+  [Attribute m] ->
+  [Html m] ->
+  (VirtualDom, Node m, [Mutation m])
+buildElement (VirtualDom nextId parentId) tag attrs children =
+  let (vdom, childNodes, mutations) =
+        foldr
+          ( \child
+             ( VirtualDom childNextId childParentId,
+               childNodes2,
+               childMutations
+               ) ->
+                let ( VirtualDom innerChildNextId _,
+                      innerNode,
+                      innerMutations
+                      ) =
+                        build (VirtualDom childNextId childParentId) child
+                 in ( VirtualDom innerChildNextId childParentId,
+                      innerNode : childNodes2,
+                      innerMutations ++ childMutations
+                    )
+          )
+          (VirtualDom (nextId + 1) nextId, [], [])
+          children
+      attrMutations = map (SetAttribute nextId) attrs
+   in ( vdom,
+        ElementNode nextId attrs childNodes,
+        CreateElement tag nextId parentId : attrMutations ++ mutations
+      )
+
+buildText :: VirtualDom -> String -> (VirtualDom, Node m, [Mutation m])
+buildText (VirtualDom nextId parentId) content =
+  ( VirtualDom (nextId + 1) nextId,
+    TextNode nextId content,
+    [CreateTextNode content nextId parentId]
+  )
+
+build :: VirtualDom -> Html m -> (VirtualDom, Node m, [Mutation m])
+build vdom html = case html of
+  Element tag attrs children -> buildElement vdom tag attrs children
+  Text content -> buildText vdom content
+
+rebuildElement ::
+  VirtualDom ->
+  String ->
+  [Attribute m] ->
+  [Html m] ->
   Node m ->
   (VirtualDom, Node m, [Mutation m])
-rebuild (VirtualDom nextId parentId) html node = case html of
-  Element tag attrs children ->
-    case node of
-      ElementNode nodeId nodeAttrs nodeChildren ->
-        let (vdom, childNodes, mutations) =
-              foldr
-                ( \(child, childNode)
-                   ( VirtualDom childNextId childParentId,
-                     childNodes2,
-                     childMutations
-                     ) ->
-                      let ( VirtualDom innerChildNextId _,
-                            innerNode,
-                            innerMutations
-                            ) =
-                              rebuild (VirtualDom childNextId childParentId) child childNode
-                       in ( VirtualDom innerChildNextId childParentId,
-                            innerNode : childNodes2,
-                            innerMutations ++ childMutations
-                          )
-                )
-                (VirtualDom (nextId + 1) nextId, [], [])
-                (zip children nodeChildren)
-            attrMutations = map (SetAttribute nodeId) attrs
-         in ( vdom,
-              ElementNode nodeId nodeAttrs childNodes,
-              mutations ++ attrMutations
-            )
-      TextNode id _ ->
-        ( VirtualDom (nextId + 1) parentId,
-          ElementNode nextId attrs [],
-          [Remove id, CreateElement tag nextId parentId]
-        )
-  Text content -> case node of
+rebuildElement (VirtualDom nextId parentId) tag attrs children node =
+  case node of
+    ElementNode nodeId nodeAttrs nodeChildren ->
+      let (vdom, childNodes, mutations) =
+            foldr
+              ( \(child, childNode)
+                 ( VirtualDom childNextId childParentId,
+                   childNodes2,
+                   childMutations
+                   ) ->
+                    let ( VirtualDom innerChildNextId _,
+                          innerNode,
+                          innerMutations
+                          ) =
+                            rebuild
+                              (VirtualDom childNextId childParentId)
+                              child
+                              childNode
+                     in ( VirtualDom innerChildNextId childParentId,
+                          innerNode : childNodes2,
+                          innerMutations ++ childMutations
+                        )
+              )
+              (VirtualDom (nextId + 1) nextId, [], [])
+              (zip children nodeChildren)
+          attrMutations = map (SetAttribute nodeId) attrs
+       in ( vdom,
+            ElementNode nodeId nodeAttrs childNodes,
+            mutations ++ attrMutations
+          )
+
+rebuildText ::
+  VirtualDom ->
+  String ->
+  Node m ->
+  (VirtualDom, Node m, [Mutation m])
+rebuildText (VirtualDom nextId parentId) content node =
+  case node of
     ElementNode id _ _ ->
       ( VirtualDom (nextId + 1) parentId,
         TextNode nextId content,
@@ -151,3 +171,12 @@ rebuild (VirtualDom nextId parentId) html node = case html of
             [SetText id content]
           )
         else (VirtualDom (nextId + 1) parentId, TextNode id content, [])
+
+rebuild ::
+  VirtualDom ->
+  Html m ->
+  Node m ->
+  (VirtualDom, Node m, [Mutation m])
+rebuild vdom html node = case html of
+  Element tag attrs children -> rebuildElement vdom tag attrs children node
+  Text content -> rebuildText vdom content node
