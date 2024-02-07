@@ -79,7 +79,7 @@ buildElement ::
   [Html m] ->
   (VirtualDom, Node m, [Mutation m])
 buildElement (VirtualDom nextId parentId) tag attrs children =
-  let (vdom, childNodes, mutations) =
+  let (VirtualDom nId _, childNodes, mutations) =
         foldr
           ( \child
              ( VirtualDom childNextId childParentId,
@@ -99,7 +99,7 @@ buildElement (VirtualDom nextId parentId) tag attrs children =
           (VirtualDom (nextId + 1) nextId, [], [])
           children
       attrMutations = map (SetAttribute nextId) attrs
-   in ( vdom,
+   in ( VirtualDom nId nextId,
         ElementNode nextId attrs childNodes,
         CreateElement tag nextId parentId : attrMutations ++ mutations
       )
@@ -146,7 +146,7 @@ rebuildElement (VirtualDom nextId parentId) tag attrs children node =
                           innerMutations ++ childMutations
                         )
               )
-              (VirtualDom (nextId + 1) nextId, [], [])
+              (VirtualDom nextId nodeId, [], [])
               (zip children nodeChildren)
           (vdom3, childNodes3, mutations3) =
             let childrenLength = length children
