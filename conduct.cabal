@@ -16,10 +16,7 @@ custom-setup
 
 library
     exposed-modules:
-        Attribute
         EventLoop
-        Html
-        VirtualDom
 
     hs-source-dirs:   src
     default-language: Haskell2010
@@ -29,7 +26,8 @@ library
         aeson >=2.1,
         bytestring >=0.11,
         utf8-string >=1.0,
-        stm >=2.5
+        stm >=2.5,
+        conduit
 
 executable custom-build
     main-is:          Setup.hs
@@ -41,20 +39,13 @@ executable custom-build
         process >=1.6,
         Cabal >=1.1
 
-executable counter
-    main-is:          Counter.hs
+executable example
+    main-is:          Basic.hs
     hs-source-dirs:   examples
     default-language: Haskell2010
     ghc-options:      -Wall -threaded -rtsopts -with-rtsopts=-N
     build-depends:
         base >=4 && <5,
-        conduct
+        conduct,
+        conduit
 
-executable todomvc
-    main-is:          TodoMvc.hs
-    hs-source-dirs:   examples
-    default-language: Haskell2010
-    ghc-options:      -Wall -threaded -rtsopts -with-rtsopts=-N
-    build-depends:
-        base >=4 && <5,
-        conduct

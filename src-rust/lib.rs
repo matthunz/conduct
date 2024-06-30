@@ -64,8 +64,6 @@ fn main(callback: extern "C" fn(*const c_char)) -> wry::Result<()> {
 
 #[no_mangle]
 pub unsafe extern "C" fn c_start(callback: extern "C" fn(*const c_char)) {
-    dbg!("RUST MAIN");
-
     main(callback).unwrap();
 }
 
