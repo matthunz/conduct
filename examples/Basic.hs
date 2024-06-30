@@ -1,7 +1,7 @@
 module Main where
 
+import Conduct
 import Conduit
-import EventLoop
 
 app = do
   yield "console.log('Hello, World!')"
