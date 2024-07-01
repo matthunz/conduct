@@ -4,7 +4,9 @@ import Conduct
 import Conduit
 
 app = do
-  yield "console.log('Hello, World!')"
+  yield "window.ipc.postMessage('Hello, World!');"
+  x <- await
+  liftIO $ print x
 
 main :: IO ()
 main = do

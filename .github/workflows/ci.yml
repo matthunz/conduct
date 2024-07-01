@@ -41,6 +41,8 @@ jobs:
             ${{ runner.os }}-build-
             ${{ runner.os }}-
 
+      - uses: haskell-actions/run-ormolu@v16
+
       - name: Install dependencies
         run: |
           cabal update
